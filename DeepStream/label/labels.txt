@@ -1,0 +1,2 @@
+ba muoi;ba muoi nam;bay muoi;bay muoi nam;bon muoi;bon muoi nam;chin muoi;chin muoi nam;hai muoi;hai muoi nam;mot tram;mot tram ba muoi;mot tram ba muoi nam;mot tram bay muoi;mot tram bay muoi nam;mot tram bon muoi;mot tram bon muoi nam;mot tram hai muoi;mot tram hai muoi nam;mot tram muoi;mot tram muoi nam;mot tram nam;mot tram nam muoi;mot tram nam muoi nam;mot tram sau muoi;mot tram sau muoi nam;mot tram tam muoi;muoi;muoi nam;nam muoi;nam muoi nam;sau muoi;sau muoi nam;tam muoi;tam muoi nam
+black;blue;white
