@@ -27,15 +27,15 @@ In this repository, we provide comprehensive guidance on how to deploy an AI mod
 
 ## Future Update
 
-* Deploying on DeepStream
+* Deploying on DeepStream with faster processing speed
 
 ## Contact
 
-* Connect with me via email: lehoangvu260602@gmail.com
+* Connect with me via email: nguyenthanhson2182002@gmail.com
 
 ## Copyright
 
-* Copyright &#169; 2024 Lê Hoàng Vũ
+* Copyright &#169; 2024 Nguyễn Thành Sơn
 
 ## Authors
 
