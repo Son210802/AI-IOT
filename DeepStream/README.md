@@ -1,44 +1,107 @@
-[![a header for a software project about building AI model](https://raw.githubusercontent.com/dusty-nv/jetson-containers/docs/docs/images/header_blueprint_rainbow.jpg)](https://www.jetson-ai-lab.com)
+# Deploy with ONNX Runtime
 
-# Welcome to Angle Detection Repository
+This section will provide a detailed guide on how to deploy your model using ONNX Runtime on a Jetson. Initially, we will explain how to receive input signals through the [`Jetson'GPIO`](https://github.com/NVIDIA/jetson-gpio). Once the input signal is detected, the system will capture an image and commence the inference process. Additionally, we will cover how to establish a socket connection, which allows you to transfer messages to an opponent system seamlessly if you choose to implement this feature. This can ensure efficient communication and coordination between devices, potentially enhancing the overall functionality and performance of your deployed model.
 
-In this repository, we provide comprehensive guidance on how to deploy an AI model for detecting angles and colors in an industrial conveyor system. You will find in this repo the following stuff:
+## Quickstart
 
-<a href="https://www.jetson-ai-lab.com"><img align="right" width="200" height="200" src="https://nvidia-ai-iot.github.io/jetson-generative-ai-playground/images/JON_Gen-AI-panels.png"></a>
+### Export
 
-1. **Training the Model**: offering a detailed guide on [`trainning model`](https://github.com/leehoanzu/angle-detection/blob/main/train/README.md) effectively to detect angles and colors, with complete documentation available here. 
-2. **Deploying the Model**: How to deploy the model using [`ONNX Runtime`](https://github.com/leehoanzu/angle-detection/blob/main/onnx-runtime/README.md) which inferences efficiently across multiple platforms and hardware or  [`TensorRT`](https://github.com/leehoanzu/angle-detection/blob/main/yolo-obb/README.md) to optimize their model for NVIDIA devices.
-3.  **Setting Up Communication**: Ensuring efficient communication between systems, we include a guide on setting up a [`socket connection`](https://github.com/leehoanzu/angle-detection/blob/main/socket/README.md) for data transfer between devices.
+In this tutorial, we describe how to convert a model defined in PyTorch into the ONNX format using the TorchScript [`torch.onnx.export`](https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html) ONNX exporter.
 
+The [`exported model`](https://github.com/leehoanzu/angle-detection/blob/main/onnx-runtime/onnx_export.py) will be executed with ONNX Runtime. ONNX Runtime is a performance-focused engine for ONNX models, which inferences efficiently across multiple platforms and hardware.
 
-## Gallery
+```python
+def export_onnx(self):
+    # Export the loaded model to ONNX format.
 
-* Integrate Jetson's inference capabilities and communicate with the ABB robot arm.
+    # Example input
+    dummy_input = self._preprocess_image("./image/sample.jpg").unsqueeze(0).to(self.device)
 
-<a href="https://youtu.be/C5XvOQaP5cA"><img src="https://github.com/leehoanzu/angle-detection/blob/main/screen-shots/automatic_operation.gif"></a> <br/>
+    torch.onnx.export(self.model, 
+                        dummy_input, 
+                        self.onnx_model_path, 
+                        export_params=True, 
+                        opset_version=10, 
+                        do_constant_folding=True, 
+                        input_names=['input'], 
+                        output_names=['output'])
+    print(f"Model has been successfully exported to {self.onnx_model_path}")
+```
 
-* Overview
+### Load Model
 
-![`Overview`](https://github.com/leehoanzu/angle-detection/blob/main/screen-shots/genaral.jpg)
+```python
+import onnxruntime as ort
 
-* Console
+def _loadOnnxModel(self):
+    # Load the ONNX model using ONNX Runtime.
+    return ort.InferenceSession(self.onnxModelPath)
+```
 
-![`ABB robot console`](https://github.com/leehoanzu/angle-detection/blob/main/screen-shots/console_ABB.jpg) ![`Jetson Console`](https://github.com/leehoanzu/angle-detection/blob/main/screen-shots/yolo_results.png)
+### Define Input Pin
 
-## Future Update
+```python
+def callbackFcn(channel):
+    """
+    Callback function that is triggered when the sensor detects an event.
+    Captures an image and starts a prediction thread.
+    """
+    GPIO.output(ouputPin, GPIO.HIGH)
+    if GPIO.input(sensorPin) == 0:
+        print("Sensor detected!")
+        cap = cv2.VideoCapture(4)  # Adjust camera index if needed
+        access, img = cap.read()
+        if access:
+            cv2.imwrite(pathImage, img)
+            Thread(target=threadPredict, args=(pathImage,)).start()
+        else:
+            print("Failed to capture image.")
+        cap.release()
+    print("finish!")
+    GPIO.output(ouputPin, GPIO.LOW)
 
-* Deploying on DeepStream
+def _init_():
+    """
+    Function to initialize GPIO settings.
+    sensorPin = 18
+    ouput PIn = 16
+    """
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(sensorPin, GPIO.IN)
+    GPIO.setup(ouputPin, GPIO.OUT, initial=GPIO.LOW)
+    GPIO.add_event_detect(sensorPin, GPIO.FALLING, callback=callbackFcn, bouncetime=20)
 
-## Contact
+    print("Starting demo now! Press CTRL+C to exit\n")
+```
 
-* Connect with me via email: lehoangvu260602@gmail.com
+### Infer
 
-## Copyright
+```python
+def infernce(self, imagePath):
+    # Perform inference on the preprocessed image using the ONNX model.
 
-* Copyright &#169; 2024 Lê Hoàng Vũ
+    ortSession = self._loadOnnxModel()
 
-## Authors
+    image = self.preProcessImage(imagePath)
+    self._loadLabels()
 
-* Lê Hoàng Vũ
-* Nguyễn Trọng Hiếu
-* Nguyễn Thành Sơn
+    imageY = image.unsqueeze(0)
+    ortInput = {ortSession.get_inputs()[0].name: imageY.numpy()}
+    ortOutputs = ortSession.run(None, ortInput)
+    
+    return ortOutputs
+```
+
+### Display
+
+```python
+def dispPreds(self, output):
+    # Display the prediction results.
+    out = np.array(output)
+    preds = np.argmax(out)
+    print(f'Predicted: {self.labels[preds]}')
+```
+
+> [!NOTE]  
+> <sup>- This quote is sourced from [`onnx_utils.py`](https://github.com/leehoanzu/angle-detection/blob/main/onnx-runtime/onnx_utils.py) and [`main.py`](https://github.com/leehoanzu/angle-detection/blob/main/onnx-runtime/main.py).</sup><br>
+> <sup>- For more detailed information, please refer to these files.</sup>
