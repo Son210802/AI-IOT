@@ -1,15 +1,34 @@
-# Deploy with DeepStream
+# Deploy with Onnx-RUNTIME
 
-The following are instructions on how to deploy a model that determines the rotation angle and color of an object into DeepStream. DeepStream is a powerful and intelligent multi-stream video analysis AI engine, the GStreamer framework powers it. This guide only stops at putting the model into deepstream and printing the model results to the console screen, but in terms of processing speed, there are still many limitations.
+Here are instructions on how to deploy the model using Onnx-RUNTIME. ONNX Runtime is a performance-focused tool for ONNX models, enabling efficient inference across a variety of platforms and hardware such as Windows, Linux, Mac, and on both CPU and GPU. ONNX Runtime provides special optimizations that speed up inference, reduce latency, and improve overall model performance.
 
 ## Guide
 
-### Modify files config: 
+### Load model: 
 
-Here we will put the model into the config file including 1 onnx file, 1 engine file, 1 label file along with related properties. [`file config`](https://github.com/Son210802/AI-IOT/blob/main/Image/fileconfig.jpg)
-![`file config`](https://github.com/Son210802/AI-IOT/blob/main/Image/fileconfig.jpg)
+```python
+def loadModel():
+    # Create device
+    print(DEVICE)
 
+    # Create model
+    model = models.resnet18(pretrained=False)
+    num_ftrs = model.fc.in_features
 
+    # Change the last number of feauters
+    model.fc = nn.Linear(num_ftrs, 36)
+    
+    # Load your pre trainned model from device
+    model = model.to(DEVICE)
+    model.load_state_dict(torch.load(preTrainnedModelPath, map_location=torch.device(DEVICE)))
+
+    # Set the model to evaluation mode
+    model.eval()
+
+    return model
+```
+
+### Export ONNX: 
 
 ```python
 def export_onnx(self):
@@ -29,64 +48,36 @@ def export_onnx(self):
     print(f"Model has been successfully exported to {self.onnx_model_path}")
 ```
 
-### Load Model
+### Image preprocessing: 
 
 ```python
-import onnxruntime as ort
+def preProcessImage(pathImage):
+    # Load and preprocess the input image
+    # input_image_path = "/home/deepstream/Desktop/OnnxAPI/image/cat_224x224.jpg"
 
-def _loadOnnxModel(self):
-    # Load the ONNX model using ONNX Runtime.
-    return ort.InferenceSession(self.onnxModelPath)
+    # These components represent luminance (Y), and the blue-difference (Cb) 
+    # and red-difference (Cr) chroma components
+    inputImage = Image.open(pathImage)
+    print(np.array(Image.open(pathImage)).shape)
+
+    preprocess = transforms.Compose([
+        transforms.CenterCrop((247, 730)),  # Thay đổi kích thước ảnh
+        transforms.Grayscale(num_output_channels=3),
+        transforms.ToTensor(),   # Chuyển đổi thành tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Chuẩn hóa dữ liệu
+    ])
+    
+    return preprocess(inputImage)
 ```
 
-### Define Input Pin
+### Inferrence:
 
 ```python
-def callbackFcn(channel):
-    """
-    Callback function that is triggered when the sensor detects an event.
-    Captures an image and starts a prediction thread.
-    """
-    GPIO.output(ouputPin, GPIO.HIGH)
-    if GPIO.input(sensorPin) == 0:
-        print("Sensor detected!")
-        cap = cv2.VideoCapture(4)  # Adjust camera index if needed
-        access, img = cap.read()
-        if access:
-            cv2.imwrite(pathImage, img)
-            Thread(target=threadPredict, args=(pathImage,)).start()
-        else:
-            print("Failed to capture image.")
-        cap.release()
-    print("finish!")
-    GPIO.output(ouputPin, GPIO.LOW)
+def inferrence(ortSession, imageY):
+    
+    imageY = imageY.unsqueeze(0)
 
-def _init_():
-    """
-    Function to initialize GPIO settings.
-    sensorPin = 18
-    ouput PIn = 16
-    """
-    GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(sensorPin, GPIO.IN)
-    GPIO.setup(ouputPin, GPIO.OUT, initial=GPIO.LOW)
-    GPIO.add_event_detect(sensorPin, GPIO.FALLING, callback=callbackFcn, bouncetime=20)
-
-    print("Starting demo now! Press CTRL+C to exit\n")
-```
-
-### Infer
-
-```python
-def infernce(self, imagePath):
-    # Perform inference on the preprocessed image using the ONNX model.
-
-    ortSession = self._loadOnnxModel()
-
-    image = self.preProcessImage(imagePath)
-    self._loadLabels()
-
-    imageY = image.unsqueeze(0)
+    # Perform inference using ONNX Runtime
     ortInput = {ortSession.get_inputs()[0].name: imageY.numpy()}
     ortOutputs = ortSession.run(None, ortInput)
     
@@ -96,13 +87,21 @@ def infernce(self, imagePath):
 ### Display
 
 ```python
-def dispPreds(self, output):
-    # Display the prediction results.
-    out = np.array(output)
-    preds = np.argmax(out)
-    print(f'Predicted: {self.labels[preds]}')
-```
+pathImage = "./image/rightway.jpg"
+imageY = preProcessImage(pathImage)
+# print(preProcessImage(ortSession, pathImage))
 
-> [!NOTE]  
-> <sup>- This quote is sourced from [`onnx_utils.py`](https://github.com/leehoanzu/angle-detection/blob/main/onnx-runtime/onnx_utils.py) and [`main.py`](https://github.com/leehoanzu/angle-detection/blob/main/onnx-runtime/main.py).</sup><br>
-> <sup>- For more detailed information, please refer to these files.</sup>
+# Inferencing your image
+outputY = inferrence(ortSession, imageY)
+print(outputY)
+
+# Change list object to numpy object
+out = np.array(outputY)
+# Indicate position of values in array
+preds = np.argmax(out)
+print(preds)
+
+# Load label to display terminal monitor
+label = loadLabels(pathLabels)
+print(f'Predicted: {label[preds]}')
+```
