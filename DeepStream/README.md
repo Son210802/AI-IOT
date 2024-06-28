@@ -7,6 +7,7 @@ The following are instructions on how to deploy a model that determines the rota
 ### Modify files config: 
 
 Here we will put the model into the config file including 1 onnx file, 1 engine file, 1 label file along with related properties. [`file config`](https://github.com/Son210802/AI-IOT/blob/main/Image/fileconfig.jpg)
+![`file config`](https://github.com/Son210802/AI-IOT/blob/main/Image/fileconfig.jpg)
 
 
 
