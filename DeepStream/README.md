@@ -85,7 +85,3 @@ tiler_src_pad_buffer_probe(GstPad *pad, GstPadProbeInfo *info, gpointer u_data)
 
 ## Result
 ![`result`](https://github.com/Son210802/AI-IOT/blob/main/Image/result-deepstream.png)
-
-> [!NOTE]  
-> <sup>- This quote is sourced from [`onnx_utils.py`](https://github.com/leehoanzu/angle-detection/blob/main/onnx-runtime/onnx_utils.py) and [`main.py`](https://github.com/leehoanzu/angle-detection/blob/main/onnx-runtime/main.py).</sup><br>
-> <sup>- For more detailed information, please refer to these files.</sup>
