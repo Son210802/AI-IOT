@@ -1,17 +1,8 @@
-[![a header for a software project about building AI model](https://raw.githubusercontent.com/dusty-nv/jetson-containers/docs/docs/images/header_blueprint_rainbow.jpg)](https://www.jetson-ai-lab.com)
+# Train 
 
-# Welcome to Angle Detection Repository
+To be able to train a model is not simple, first we have to see which training methods the model is suitable for such as classfication, regression, detection,... With the problem of determining angles as well as colors, the team has Use 2 types of problems for training to compare its effectiveness
 
-In this repository, we provide comprehensive guidance on how to deploy an AI model for detecting angles and colors in an industrial conveyor system. You will find in this repo the following stuff:
-
-<a href="https://www.jetson-ai-lab.com"><img align="right" width="200" height="200" src="https://nvidia-ai-iot.github.io/jetson-generative-ai-playground/images/JON_Gen-AI-panels.png"></a>
-
-1. **Training the Model**: offering a detailed guide on [`trainning model`](https://github.com/leehoanzu/angle-detection/blob/main/train/README.md) effectively to detect angles and colors, with complete documentation available here. 
-2. **Deploying the Model**: How to deploy the model using [`ONNX Runtime`](https://github.com/leehoanzu/angle-detection/blob/main/onnx-runtime/README.md) which inferences efficiently across multiple platforms and hardware or  [`TensorRT`](https://github.com/leehoanzu/angle-detection/blob/main/yolo-obb/README.md) to optimize their model for NVIDIA devices.
-3.  **Setting Up Communication**: Ensuring efficient communication between systems, we include a guide on setting up a [`socket connection`](https://github.com/leehoanzu/angle-detection/blob/main/socket/README.md) for data transfer between devices.
-
-
-## Gallery
+## Classfication
 
 * Integrate Jetson's inference capabilities and communicate with the ABB robot arm.
 
