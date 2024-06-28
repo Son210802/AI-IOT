@@ -1,14 +1,15 @@
-# Deploy with ONNX Runtime
+# Deploy with DeepStream
 
-This section will provide a detailed guide on how to deploy your model using ONNX Runtime on a Jetson. Initially, we will explain how to receive input signals through the [`Jetson'GPIO`](https://github.com/NVIDIA/jetson-gpio). Once the input signal is detected, the system will capture an image and commence the inference process. Additionally, we will cover how to establish a socket connection, which allows you to transfer messages to an opponent system seamlessly if you choose to implement this feature. This can ensure efficient communication and coordination between devices, potentially enhancing the overall functionality and performance of your deployed model.
+The following are instructions on how to deploy a model that determines the rotation angle and color of an object into DeepStream. DeepStream is a powerful and intelligent multi-stream video analysis AI engine, the GStreamer framework powers it. This guide only stops at putting the model into deepstream and printing the model results to the console screen, but in terms of processing speed, there are still many limitations.
 
-## Quickstart
+## Guide
 
-### Export
+### Modify files config: 
 
-In this tutorial, we describe how to convert a model defined in PyTorch into the ONNX format using the TorchScript [`torch.onnx.export`](https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html) ONNX exporter.
+Here we will put the model into the config file including 1 onnx file, 1 engine file, 1 label file along with related properties. [`file config`](https://github.com/Son210802/AI-IOT/blob/main/Image/fileconfig.jpg)
+![`file config`](https://github.com/Son210802/AI-IOT/blob/main/Image/fileconfig.jpg)
 
-The [`exported model`](https://github.com/leehoanzu/angle-detection/blob/main/onnx-runtime/onnx_export.py) will be executed with ONNX Runtime. ONNX Runtime is a performance-focused engine for ONNX models, which inferences efficiently across multiple platforms and hardware.
+
 
 ```python
 def export_onnx(self):
