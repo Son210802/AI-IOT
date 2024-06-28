@@ -1,44 +1,108 @@
-[![a header for a software project about building AI model](https://raw.githubusercontent.com/dusty-nv/jetson-containers/docs/docs/images/header_blueprint_rainbow.jpg)](https://www.jetson-ai-lab.com)
+# Deploy with DeepStream
 
-# Welcome to Angle Detection Repository
+The following are instructions on how to deploy a model that determines the rotation angle and color of an object into DeepStream. DeepStream is a powerful and intelligent multi-stream video analysis AI engine, the GStreamer framework powers it. This guide only stops at putting the model into deepstream and printing the model results to the console screen, but in terms of processing speed, there are still many limitations.
 
-In this repository, we provide comprehensive guidance on how to deploy an AI model for detecting angles and colors in an industrial conveyor system. You will find in this repo the following stuff:
+## Guide
 
-<a href="https://www.jetson-ai-lab.com"><img align="right" width="200" height="200" src="https://nvidia-ai-iot.github.io/jetson-generative-ai-playground/images/JON_Gen-AI-panels.png"></a>
+### Modify files config: 
 
-1. **Training the Model**: offering a detailed guide on [`trainning model`](https://github.com/leehoanzu/angle-detection/blob/main/train/README.md) effectively to detect angles and colors, with complete documentation available here. 
-2. **Deploying the Model**: How to deploy the model using [`ONNX Runtime`](https://github.com/leehoanzu/angle-detection/blob/main/onnx-runtime/README.md) which inferences efficiently across multiple platforms and hardware or  [`TensorRT`](https://github.com/leehoanzu/angle-detection/blob/main/yolo-obb/README.md) to optimize their model for NVIDIA devices.
-3.  **Setting Up Communication**: Ensuring efficient communication between systems, we include a guide on setting up a [`socket connection`](https://github.com/leehoanzu/angle-detection/blob/main/socket/README.md) for data transfer between devices.
+Here we will put the model into the config file including 1 onnx file, 1 engine file, 1 label file along with related properties. [`file config`](https://github.com/Son210802/AI-IOT/blob/main/Image/fileconfig.jpg)
+![`file config`](https://github.com/Son210802/AI-IOT/blob/main/Image/fileconfig.jpg)
 
 
-## Gallery
 
-* Integrate Jetson's inference capabilities and communicate with the ABB robot arm.
+```python
+def export_onnx(self):
+    # Export the loaded model to ONNX format.
 
-<a href="https://youtu.be/C5XvOQaP5cA"><img src="https://github.com/leehoanzu/angle-detection/blob/main/screen-shots/automatic_operation.gif"></a> <br/>
+    # Example input
+    dummy_input = self._preprocess_image("./image/sample.jpg").unsqueeze(0).to(self.device)
 
-* Overview
+    torch.onnx.export(self.model, 
+                        dummy_input, 
+                        self.onnx_model_path, 
+                        export_params=True, 
+                        opset_version=10, 
+                        do_constant_folding=True, 
+                        input_names=['input'], 
+                        output_names=['output'])
+    print(f"Model has been successfully exported to {self.onnx_model_path}")
+```
 
-![`Overview`](https://github.com/leehoanzu/angle-detection/blob/main/screen-shots/genaral.jpg)
+### Load Model
 
-* Console
+```python
+import onnxruntime as ort
 
-![`ABB robot console`](https://github.com/leehoanzu/angle-detection/blob/main/screen-shots/console_ABB.jpg) ![`Jetson Console`](https://github.com/leehoanzu/angle-detection/blob/main/screen-shots/yolo_results.png)
+def _loadOnnxModel(self):
+    # Load the ONNX model using ONNX Runtime.
+    return ort.InferenceSession(self.onnxModelPath)
+```
 
-## Future Update
+### Define Input Pin
 
-* Deploying on DeepStream
+```python
+def callbackFcn(channel):
+    """
+    Callback function that is triggered when the sensor detects an event.
+    Captures an image and starts a prediction thread.
+    """
+    GPIO.output(ouputPin, GPIO.HIGH)
+    if GPIO.input(sensorPin) == 0:
+        print("Sensor detected!")
+        cap = cv2.VideoCapture(4)  # Adjust camera index if needed
+        access, img = cap.read()
+        if access:
+            cv2.imwrite(pathImage, img)
+            Thread(target=threadPredict, args=(pathImage,)).start()
+        else:
+            print("Failed to capture image.")
+        cap.release()
+    print("finish!")
+    GPIO.output(ouputPin, GPIO.LOW)
 
-## Contact
+def _init_():
+    """
+    Function to initialize GPIO settings.
+    sensorPin = 18
+    ouput PIn = 16
+    """
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(sensorPin, GPIO.IN)
+    GPIO.setup(ouputPin, GPIO.OUT, initial=GPIO.LOW)
+    GPIO.add_event_detect(sensorPin, GPIO.FALLING, callback=callbackFcn, bouncetime=20)
 
-* Connect with me via email: lehoangvu260602@gmail.com
+    print("Starting demo now! Press CTRL+C to exit\n")
+```
 
-## Copyright
+### Infer
 
-* Copyright &#169; 2024 Lê Hoàng Vũ
+```python
+def infernce(self, imagePath):
+    # Perform inference on the preprocessed image using the ONNX model.
 
-## Authors
+    ortSession = self._loadOnnxModel()
 
-* Lê Hoàng Vũ
-* Nguyễn Trọng Hiếu
-* Nguyễn Thành Sơn
+    image = self.preProcessImage(imagePath)
+    self._loadLabels()
+
+    imageY = image.unsqueeze(0)
+    ortInput = {ortSession.get_inputs()[0].name: imageY.numpy()}
+    ortOutputs = ortSession.run(None, ortInput)
+    
+    return ortOutputs
+```
+
+### Display
+
+```python
+def dispPreds(self, output):
+    # Display the prediction results.
+    out = np.array(output)
+    preds = np.argmax(out)
+    print(f'Predicted: {self.labels[preds]}')
+```
+
+> [!NOTE]  
+> <sup>- This quote is sourced from [`onnx_utils.py`](https://github.com/leehoanzu/angle-detection/blob/main/onnx-runtime/onnx_utils.py) and [`main.py`](https://github.com/leehoanzu/angle-detection/blob/main/onnx-runtime/main.py).</sup><br>
+> <sup>- For more detailed information, please refer to these files.</sup>
