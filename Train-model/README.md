@@ -4,7 +4,7 @@ To be able to train a model is not simple, first we have to see which training m
 
 ## Classfication
 
-* Integrate Jetson's inference capabilities and communicate with the ABB robot arm.
+With the classification method, we use a dataset of 2400 images with each different angle along with a csv file containing images with the corresponding angle, taking the error as +-5 degrees, for example from 0 to 4. degrees are put into class 1, 5 to 9 degrees are put into class 2, ... Training process at 
 
 <a href="https://youtu.be/C5XvOQaP5cA"><img src="https://github.com/leehoanzu/angle-detection/blob/main/screen-shots/automatic_operation.gif"></a> <br/>
 
