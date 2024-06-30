@@ -6,26 +6,15 @@ To be able to train a model is not simple, first we have to see which training m
 
 With the classification method, we use a dataset of 2400 images with each different angle along with a csv file containing images with the corresponding angle, taking the error as +-5 degrees, for example from 0 to 4. degrees are put into class 1, 5 to 9 degrees are put into class 2, ... Training process at [`Classfication`](https://github.com/Son210802/AI-IOT/blob/main/Train-model/classification.ipynb) 
 
-![`Overview`](https://github.com/leehoanzu/angle-detection/blob/main/screen-shots/genaral.jpg)
+### Result
 
-* Console
+![`confusionmatrix`](https://github.com/Son210802/AI-IOT/blob/main/Image/confusionmatrix.jpg)
 
-![`ABB robot console`](https://github.com/leehoanzu/angle-detection/blob/main/screen-shots/console_ABB.jpg) ![`Jetson Console`](https://github.com/leehoanzu/angle-detection/blob/main/screen-shots/yolo_results.png)
+## Object detection
 
-## Future Update
+Using Ultralytics YOLOv8 along with running on the Google colab platform to be able to train the model, YOLOv8 will draw boxes for objects to make training more effective in determining color rotation angles, with only a dataset of 180 The image has been drawn with a box to identify the object. Training process at
+[`Object detection`](https://github.com/Son210802/AI-IOT/blob/main/Train-model/object_detection.ipynb) 
 
-* Deploying on DeepStream
+### Result
 
-## Contact
-
-* Connect with me via email: lehoangvu260602@gmail.com
-
-## Copyright
-
-* Copyright &#169; 2024 Lê Hoàng Vũ
-
-## Authors
-
-* Lê Hoàng Vũ
-* Nguyễn Trọng Hiếu
-* Nguyễn Thành Sơn
+![``](https://github.com/Son210802/AI-IOT/blob/main/Image/predict.jpg)
